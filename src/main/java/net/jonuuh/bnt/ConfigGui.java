@@ -20,7 +20,7 @@
 //    {
 //        buttonList.clear(); // redundancy
 //        buttonList.add(new GuiButton(buttonID0, 0, 0, 200, 20, "hello world"));
-//        buttonList.add(new GuiSlider(5, 250, 250, 150, 20, "Health threshold: ", "%", 0d, 100d, sliderVal, false, true, this));
+//        buttonList.add(new GuiSlider(5, 250, 250, 150, 20, "Test: ", "%", 0d, 100d, sliderVal, false, true, this));
 //
 ////        buttonList.add(new GuiSlider());
 //        super.initGui();
