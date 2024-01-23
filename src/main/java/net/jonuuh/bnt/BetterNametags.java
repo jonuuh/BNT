@@ -32,7 +32,6 @@ public class BetterNametags
     public void FMLPreInit(FMLPreInitializationEvent event)
     {
         MinecraftForge.EVENT_BUS.register(new ConfigHandler(event.getSuggestedConfigurationFile()));
-        System.out.println(event.getModConfigurationDirectory());
     }
 
     @EventHandler
