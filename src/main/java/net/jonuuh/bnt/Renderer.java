@@ -1,5 +1,6 @@
 package net.jonuuh.bnt;
 
+import net.jonuuh.bnt.config.ConfigHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
@@ -18,28 +19,26 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.InputEvent;
 import org.lwjgl.opengl.GL11;
 
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class Renderer
 {
     private final Minecraft mc;
-    private final KeyBinding debugKey;
+    private final KeyBinding toggleKey;
     private boolean doRendering = false;
 
-    public Renderer(Minecraft mc, KeyBinding debugKey)
+    public Renderer(Minecraft mc, KeyBinding toggleKey)
     {
         this.mc = mc;
-        this.debugKey = debugKey;
+        this.toggleKey = toggleKey;
     }
 
     @SubscribeEvent
     public void onKeyInput(InputEvent.KeyInputEvent event)
     {
-        if (debugKey.isPressed())
+        if (toggleKey.isPressed())
         {
             doRendering = !doRendering;
         }
@@ -52,26 +51,34 @@ public class Renderer
         {
             return;
         }
+
         EntityPlayer player = (EntityPlayer) event.entity;
 
-        // Return if player not in NetHandler (tab list)
-        if (!getOnlinePlayerNames(mc).contains(player.getName()))
+        if (!getOnlinePlayerNames(mc).contains(player.getName()) || player.getName().isEmpty()) // Player not in NetHandler (tab list) or has no name
         {
             return;
         }
 
-        // Remove vanilla nametag
-        event.setCanceled(true);
+        if (player == mc.thePlayer && !ConfigHandler.doRenderSelf())
+        {
+            return;
+        }
+
+        if (ConfigHandler.getMaxRange() != 0 && mc.thePlayer.getDistanceToEntity(player) > ConfigHandler.getMaxRange())
+        {
+            return;
+        }
+
+        event.setCanceled(true); // Remove vanilla nametag
 
         String name = player.getDisplayName().getFormattedText();
         String health = getFormattedHealthText(player);
-        Color rectBordC = formattingCodeToColor.getOrDefault(name.charAt(name.indexOf(player.getName()) - 1), new Color(1.0F, 1.0F, 1.0F, 1.0F));
-        Color rectBaseC = new Color(0.0F, 0.0F, 0.0F, 0.4F);
-
+        Color rectBaseC = new Color(0.0F, 0.0F, 0.0F, ConfigHandler.getRectBaseAlpha());
+        Color rectBordC = new Color(0.0F, 0.0F, 0.0F, ConfigHandler.getRectBordAlpha());
         int headSize = 7;
-        int sepWidth = 4;
+        int sepWidth = ConfigHandler.getSepWidth();
         int x = (getFontRenderer().getStringWidth(name + health) / 2) + (headSize / 2) + sepWidth;
-        int y = 0;
+        int y = ConfigHandler.getYOffset();
 
         GlStateManager.pushMatrix();
         GlStateManager.translate((float) event.x, (float) (event.y + player.height + 0.5F), (float) event.z);
@@ -84,6 +91,7 @@ public class Renderer
         {
             GlStateManager.translate(0.0F, 9.374999F, 0.0F);
             rectBaseC.r = 0.75F;
+            rectBordC.r = 0.75F;
         }
 
         GlStateManager.disableLighting();
@@ -93,24 +101,17 @@ public class Renderer
         GlStateManager.tryBlendFuncSeparate(770, 771, 1, 0);
 
         // Draw nametag background
-        Tessellator tessellator = Tessellator.getInstance();
-        WorldRenderer worldrenderer = tessellator.getWorldRenderer();
-        GlStateManager.disableTexture2D();
-        worldrenderer.begin(7, DefaultVertexFormats.POSITION_COLOR);
-        createVertex(worldrenderer, -x - 2, y - 2, rectBaseC);
-        createVertex(worldrenderer, -x - 2, y + 9, rectBaseC);
-        createVertex(worldrenderer, x + 2, y + 9, rectBaseC);
-        createVertex(worldrenderer, x + 2, y - 2, rectBaseC);
-        tessellator.draw();
+        if (ConfigHandler.doRenderRect())
+        {
+            Tessellator tessellator = Tessellator.getInstance();
+            WorldRenderer worldrenderer = tessellator.getWorldRenderer();
+            int rectPad = ConfigHandler.getRectPadding();
 
-        // Draw nametag border
-        drawRectBorder(tessellator, worldrenderer, x, y, rectBordC);
-        GlStateManager.enableDepth();
-        GlStateManager.depthMask(true);
-        drawRectBorder(tessellator, worldrenderer, x, y, rectBordC);
-        GlStateManager.disableDepth();
-        GlStateManager.depthMask(false);
-        GlStateManager.enableTexture2D();
+            GlStateManager.disableTexture2D();
+            drawRect(tessellator, worldrenderer, x, y, rectBaseC, rectPad); // base
+            drawRectBorder(tessellator, worldrenderer, x, y, rectBordC, rectPad); // border
+            GlStateManager.enableTexture2D();
+        }
 
         // Draw nametag head and text
         drawNametagContent(player, x, y, headSize, name, health, sepWidth);
@@ -162,35 +163,53 @@ public class Renderer
         return new ChatComponentText(color + String.valueOf(Math.round(health * 2) / 2.0)).getFormattedText(); // round to nearest 0.5
     }
 
-    private void drawRectBorder(Tessellator tessellator, WorldRenderer worldrenderer, int x, int y, Color color)
+//    drawRoundedRect(-x - rectPad, y - rectPad, 7 + (rectPad * 2), (x * 2) + (rectPad * 2));
+//    private void drawRoundedRect(int x, int y, int height, int width)
+//    {
+//        mc.getTextureManager().bindTexture(new ResourceLocation("bnt", "background.png"));
+//        Gui.drawScaledCustomSizeModalRect(x, y, 0, 0, 256, 256, width, height, 256.0F, 256.0F);
+//    }
+
+    private void drawRect(Tessellator tessellator, WorldRenderer worldrenderer, int x, int y, Color color, int pad)
     {
-//        double bW = 0.5;
         worldrenderer.begin(7, DefaultVertexFormats.POSITION_COLOR);
-        createVertex(worldrenderer, -x - 2.5, y - 1.5, color);
-        createVertex(worldrenderer, -x - 2.5, y + 8.5, color);
-        createVertex(worldrenderer, -x - 2.0, y + 9.0, color);
-        createVertex(worldrenderer, -x - 2.0, y - 2.0, color);
+        createVertex(worldrenderer, -x - pad, y - pad, color);
+        createVertex(worldrenderer, -x - pad, y + 7 + pad, color);
+        createVertex(worldrenderer, x + pad, y + 7 + pad, color);
+        createVertex(worldrenderer, x + pad, y - pad, color);
+        tessellator.draw();
+    }
+
+    private void drawRectBorder(Tessellator tessellator, WorldRenderer worldrenderer, int x, int y, Color color, int pad)
+    {
+        float bW = ConfigHandler.getRectBordWidth();
+        float bO = ConfigHandler.getRectBordOffset(); // bW & bO should be equal for 45deg angle
+        worldrenderer.begin(7, DefaultVertexFormats.POSITION_COLOR);
+        createVertex(worldrenderer, -x - pad - bW, y - pad + bO, color);
+        createVertex(worldrenderer, -x - pad - bW, y + 7 + pad - bO, color);
+        createVertex(worldrenderer, -x - pad, y + 7 + pad, color);
+        createVertex(worldrenderer, -x - pad, y - pad, color);
         tessellator.draw();
 
         worldrenderer.begin(7, DefaultVertexFormats.POSITION_COLOR);
-        createVertex(worldrenderer, -x - 2.0, y + 9.0, color);
-        createVertex(worldrenderer, -x - 1.5, y + 9.5, color);
-        createVertex(worldrenderer, x + 1.5, y + 9.5, color);
-        createVertex(worldrenderer, x + 2.0, y + 9.0, color);
+        createVertex(worldrenderer, -x - pad, y + 7 + pad, color);
+        createVertex(worldrenderer, -x - pad + bO, y + 7 + pad + bW, color);
+        createVertex(worldrenderer, x + pad - bO, y + 7 + pad + bW, color);
+        createVertex(worldrenderer, x + pad, y + 7 + pad, color);
         tessellator.draw();
 
         worldrenderer.begin(7, DefaultVertexFormats.POSITION_COLOR);
-        createVertex(worldrenderer, x + 2.0, y - 2.0, color);
-        createVertex(worldrenderer, x + 2.0, y + 9.0, color);
-        createVertex(worldrenderer, x + 2.5, y + 8.5, color);
-        createVertex(worldrenderer, x + 2.5, y - 1.5, color);
+        createVertex(worldrenderer, x + pad, y - pad, color);
+        createVertex(worldrenderer, x + pad, y + 7 + pad, color);
+        createVertex(worldrenderer, x + pad + bW, y + 7 + pad - bO, color);
+        createVertex(worldrenderer, x + pad + bW, y - pad + bO, color);
         tessellator.draw();
 
         worldrenderer.begin(7, DefaultVertexFormats.POSITION_COLOR);
-        createVertex(worldrenderer, -x - 1.5, y - 2.5, color);
-        createVertex(worldrenderer, -x - 2.0, y - 2.0, color);
-        createVertex(worldrenderer, x + 2.0, y - 2.0, color);
-        createVertex(worldrenderer, x + 1.5, y - 2.5, color);
+        createVertex(worldrenderer, -x - pad + bO, y - pad - bW, color);
+        createVertex(worldrenderer, -x - pad, y - pad, color);
+        createVertex(worldrenderer, x + pad, y - pad, color);
+        createVertex(worldrenderer, x + pad - bO, y - pad - bW, color);
         tessellator.draw();
     }
 
@@ -208,35 +227,35 @@ public class Renderer
         getFontRenderer().drawString(health, -x + headSize + (sepWidth * 2) + getFontRenderer().getStringWidth(name) - 1, y, -1); // witchcraft
     }
 
-    private final Map<Character, Color> formattingCodeToColor = initMap();
-
-    private Map<Character, Color> initMap()
-    {
-        float alpha = 1.0F;
-        float zero = 0.0F;
-        float one = 1.0F;
-        float third = 0.333333F;
-        float sixth = 0.666666F;
-
-        Map<Character, Color> map = new HashMap<>();
-        map.put('0', new Color(zero, zero, zero, alpha));
-        map.put('1', new Color(zero, zero, sixth, alpha));
-        map.put('2', new Color(zero, sixth, zero, alpha));
-        map.put('3', new Color(zero, sixth, sixth, alpha));
-        map.put('4', new Color(sixth, zero, zero, alpha));
-        map.put('5', new Color(sixth, zero, sixth, alpha));
-        map.put('6', new Color(one, sixth, zero, alpha));
-        map.put('7', new Color(sixth, sixth, sixth, alpha));
-        map.put('8', new Color(third, third, third, alpha));
-        map.put('9', new Color(third, third, one, alpha));
-        map.put('a', new Color(third, one, third, alpha));
-        map.put('b', new Color(third, one, one, alpha));
-        map.put('c', new Color(one, third, third, alpha));
-        map.put('d', new Color(one, third, one, alpha));
-        map.put('e', new Color(one, one, third, alpha));
-        map.put('f', new Color(one, one, one, alpha));
-        return map;
-    }
+//    private final Map<Character, Color> formattingCodeToColor = initMap();
+//
+//    private Map<Character, Color> initMap()
+//    {
+//        float alpha = ConfigHandler.getRectBordAlpha();
+//        float zero = 0.0F;
+//        float one = 1.0F;
+//        float third = 0.333333F;
+//        float sixth = 0.666666F;
+//
+//        Map<Character, Color> map = new HashMap<>();
+//        map.put('0', new Color(zero, zero, zero, alpha));
+//        map.put('1', new Color(zero, zero, sixth, alpha));
+//        map.put('2', new Color(zero, sixth, zero, alpha));
+//        map.put('3', new Color(zero, sixth, sixth, alpha));
+//        map.put('4', new Color(sixth, zero, zero, alpha));
+//        map.put('5', new Color(sixth, zero, sixth, alpha));
+//        map.put('6', new Color(one, sixth, zero, alpha));
+//        map.put('7', new Color(sixth, sixth, sixth, alpha));
+//        map.put('8', new Color(third, third, third, alpha));
+//        map.put('9', new Color(third, third, one, alpha));
+//        map.put('a', new Color(third, one, third, alpha));
+//        map.put('b', new Color(third, one, one, alpha));
+//        map.put('c', new Color(one, third, third, alpha));
+//        map.put('d', new Color(one, third, one, alpha));
+//        map.put('e', new Color(one, one, third, alpha));
+//        map.put('f', new Color(one, one, one, alpha));
+//        return map;
+//    }
 
     private static class Color
     {

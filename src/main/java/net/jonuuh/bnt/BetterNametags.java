@@ -1,5 +1,6 @@
 package net.jonuuh.bnt;
 
+import net.jonuuh.bnt.config.ConfigHandler;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraftforge.common.MinecraftForge;
@@ -7,27 +8,37 @@ import net.minecraftforge.fml.client.registry.ClientRegistry;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
 import org.lwjgl.input.Keyboard;
 
-@Mod(modid = BetterNametags.MODID, version = BetterNametags.VERSION)
+@Mod(
+        modid = "bnt",
+        version = "1.1.0",
+        acceptedMinecraftVersions = "[1.8.9]",
+        guiFactory = "net.jonuuh.bnt.config.ConfigGuiFactory"
+)
 public class BetterNametags
 {
-    public static final String MODID = "bnt";
-    public static final String VERSION = "1.0.0";
-
     private final Minecraft mc;
-    private final KeyBinding debugKey;
+    private final KeyBinding toggleKey;
 
     public BetterNametags()
     {
         this.mc = Minecraft.getMinecraft();
-        this.debugKey = new KeyBinding("BNTDebug", Keyboard.KEY_L, "BNT");
+        this.toggleKey = new KeyBinding("Toggle Nametags", Keyboard.KEY_N, "BNT");
     }
 
     @EventHandler
-    public void init(FMLInitializationEvent event)
+    public void FMLPreInit(FMLPreInitializationEvent event)
     {
-        ClientRegistry.registerKeyBinding(debugKey);
-        MinecraftForge.EVENT_BUS.register(new Renderer(mc, debugKey));
+        MinecraftForge.EVENT_BUS.register(new ConfigHandler(event.getSuggestedConfigurationFile()));
+        System.out.println(event.getModConfigurationDirectory());
+    }
+
+    @EventHandler
+    public void FMLInit(FMLInitializationEvent event)
+    {
+        ClientRegistry.registerKeyBinding(toggleKey);
+        MinecraftForge.EVENT_BUS.register(new Renderer(mc, toggleKey));
     }
 }
