@@ -10,12 +10,13 @@ import java.io.File;
 public class ConfigHandler
 {
     private static Configuration cfg;
-    private static boolean renderSelf;
-    private static boolean renderRect;
-    private static float rectBaseAlpha;
-    private static float rectBordAlpha;
+    private static boolean doRenderSelf;
+    private static boolean doRenderRect;
+    private static boolean doRectHPColor;
+    private static float rectAlpha;
     private static float rectBordWidth;
     private static float rectBordOffset;
+    private static float rectHPColorOffset;
     private static int rectPadding;
     private static int sepWidth;
     private static int yOffset;
@@ -35,22 +36,22 @@ public class ConfigHandler
 
     public static boolean doRenderSelf()
     {
-        return renderSelf;
+        return doRenderSelf;
     }
 
     public static boolean doRenderRect()
     {
-        return renderRect;
+        return doRenderRect;
     }
 
-    public static float getRectBaseAlpha()
+    public static boolean doRectHPColor()
     {
-        return rectBaseAlpha;
+        return doRectHPColor;
     }
 
-    public static float getRectBordAlpha()
+    public static float getRectAlpha()
     {
-        return rectBordAlpha;
+        return rectAlpha;
     }
 
     public static float getRectBordWidth()
@@ -61,6 +62,11 @@ public class ConfigHandler
     public static float getRectBordOffset()
     {
         return rectBordOffset;
+    }
+
+    public static float getRectHPColorOffset()
+    {
+        return rectHPColorOffset;
     }
 
     public static int getRectPadding()
@@ -96,18 +102,19 @@ public class ConfigHandler
     private static void load()
     {
         cfg.load();
-        renderSelf = cfg.getBoolean("A Render Self", "all", true, "Whether to render your own nametag");
-        renderRect = cfg.getBoolean("B Render Background", "all", true, "Whether to render the nametag background");
-        maxRange = getIntSlider("C Max Render Range", 0, 0, 100, "Max range to render nametags in (0 = infinite)");
+        doRenderSelf = cfg.getBoolean("A Render self", "all", true, "Whether to render your own nametag");
+        doRenderRect = cfg.getBoolean("B Render background", "all", true, "Whether to render the nametag background");
+        maxRange = getIntSlider("C Max render range", 0, 0, 100, "Max range to render nametags in (0 = infinite)");
 
-        rectBaseAlpha = (float) getRoundedDoubleSlider("D Background Base Opacity", 0.4D, 0.0D, 1.0D, "Nametag background base opacity");
-        rectBordAlpha = (float) getRoundedDoubleSlider("E Background Border Opacity", 0.4D, 0.0D, 1.0D, "Nametag background border opacity");
-        rectBordWidth = (float) getRoundedDoubleSlider("F Background Border Width", 1.0D, 0.0D, 5.0D, "Nametag background border width");
-        rectBordOffset = (float) getRoundedDoubleSlider("G Background Border Corner Offset", 1.0D, 0.0D, 5.0D, "Nametag background border corner offset");
+        rectAlpha = (float) getRoundedDoubleSlider("D Background opacity", 0.3D, 0.0D, 1.0D, "Nametag background base opacity");
+        rectBordWidth = (float) getRoundedDoubleSlider("E Background border width", 1.0D, 0.0D, 5.0D, "Nametag background border width");
+        rectBordOffset = (float) getRoundedDoubleSlider("F Background border corner offset", 1.0D, 0.0D, 5.0D, "Nametag background border corner offset");
+        doRectHPColor = cfg.getBoolean("G Color background with health", "all", false, "Whether to color the nametag background based on health");
+        rectHPColorOffset = (float) getRoundedDoubleSlider("H Background health color opacity", 0.75D, 0.0D, 1.0D, "How much the health color should affect the nametag background");
 
-        rectPadding = getIntSlider("H Background Padding", 2, 0, 10, "Nametag background padding amount");
-        sepWidth = getIntSlider("I Separator Width", 4, 0, 25, "Width between elements in a nametag");
-        yOffset = getIntSlider("J Nametag Y-Axis Offset", 0, -30, 30, "Nametag y axis offset relative to player");
+        rectPadding = getIntSlider("I Background padding", 2, 0, 10, "Nametag background padding amount");
+        sepWidth = getIntSlider("J Separator width", 4, 0, 25, "Width between elements in a nametag");
+        yOffset = getIntSlider("K Nametag y-axis offset", 0, -30, 30, "Nametag y axis offset relative to player");
     }
 
     private static int getIntSlider(String key, int defaultV, int minV, int maxV, String com)

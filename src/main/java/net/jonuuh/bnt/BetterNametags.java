@@ -13,7 +13,7 @@ import org.lwjgl.input.Keyboard;
 
 @Mod(
         modid = "bnt",
-        version = "1.1.0",
+        version = "1.2.0",
         acceptedMinecraftVersions = "[1.8.9]",
         guiFactory = "net.jonuuh.bnt.config.ConfigGuiFactory"
 )

@@ -73,8 +73,7 @@ public class Renderer
 
         String name = player.getDisplayName().getFormattedText();
         String health = getFormattedHealthText(player);
-        Color rectBaseC = new Color(0.0F, 0.0F, 0.0F, ConfigHandler.getRectBaseAlpha());
-        Color rectBordC = new Color(0.0F, 0.0F, 0.0F, ConfigHandler.getRectBordAlpha());
+        Color rectC = new Color(0.0F, 0.0F, 0.0F, ConfigHandler.getRectAlpha());
         int headSize = 7;
         int sepWidth = ConfigHandler.getSepWidth();
         int x = (getFontRenderer().getStringWidth(name + health) / 2) + (headSize / 2) + sepWidth;
@@ -90,8 +89,7 @@ public class Renderer
         if (player.isSneaking())
         {
             GlStateManager.translate(0.0F, 9.374999F, 0.0F);
-            rectBaseC.r = 0.75F;
-            rectBordC.r = 0.75F;
+            rectC = new Color(0.5F, 0.5F, 0.5F, ConfigHandler.getRectAlpha());
         }
 
         GlStateManager.disableLighting();
@@ -107,9 +105,23 @@ public class Renderer
             WorldRenderer worldrenderer = tessellator.getWorldRenderer();
             int rectPad = ConfigHandler.getRectPadding();
 
+            if (ConfigHandler.doRectHPColor() && !player.isSneaking())
+            {
+                float one = 1.0F * ConfigHandler.getRectHPColorOffset();
+                float third = (1 / 3.0F) * ConfigHandler.getRectHPColorOffset();
+                float sixth = (2 / 3.0F) * ConfigHandler.getRectHPColorOffset();
+                float alpha = ConfigHandler.getRectAlpha();
+                float healthPercent = (player.getHealth() / player.getMaxHealth()) * 100;
+
+                rectC = healthPercent >= 75 ? new Color(0.0F, sixth, 0.0F, alpha) // dark green
+                        : healthPercent >= 50 ? new Color(third, one, third, alpha) // green
+                        : healthPercent >= 25 ? new Color(one, third, third, alpha) // red
+                        : new Color(sixth, 0.0F, 0.0F, alpha); // dark red
+            }
+
             GlStateManager.disableTexture2D();
-            drawRect(tessellator, worldrenderer, x, y, rectBaseC, rectPad); // base
-            drawRectBorder(tessellator, worldrenderer, x, y, rectBordC, rectPad); // border
+            drawRect(tessellator, worldrenderer, x, y, rectC, rectPad); // base
+            drawRectBorder(tessellator, worldrenderer, x, y, rectC, rectPad); // border
             GlStateManager.enableTexture2D();
         }
 
