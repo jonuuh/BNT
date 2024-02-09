@@ -175,13 +175,6 @@ public class Renderer
         return new ChatComponentText(color + String.valueOf(Math.round(health * 2) / 2.0)).getFormattedText(); // round to nearest 0.5
     }
 
-//    drawRoundedRect(-x - rectPad, y - rectPad, 7 + (rectPad * 2), (x * 2) + (rectPad * 2));
-//    private void drawRoundedRect(int x, int y, int height, int width)
-//    {
-//        mc.getTextureManager().bindTexture(new ResourceLocation("bnt", "background.png"));
-//        Gui.drawScaledCustomSizeModalRect(x, y, 0, 0, 256, 256, width, height, 256.0F, 256.0F);
-//    }
-
     private void drawRect(Tessellator tessellator, WorldRenderer worldrenderer, int x, int y, Color color, int pad)
     {
         worldrenderer.begin(7, DefaultVertexFormats.POSITION_COLOR);
@@ -239,34 +232,48 @@ public class Renderer
         getFontRenderer().drawString(health, -x + headSize + (sepWidth * 2) + getFontRenderer().getStringWidth(name) - 1, y, -1); // witchcraft
     }
 
-//    private final Map<Character, Color> formattingCodeToColor = initMap();
-//
-//    private Map<Character, Color> initMap()
+//    private int[] worldToScreen(EntityLivingBase entity, float partialTicks)
 //    {
-//        float alpha = ConfigHandler.getRectBordAlpha();
-//        float zero = 0.0F;
-//        float one = 1.0F;
-//        float third = 0.333333F;
-//        float sixth = 0.666666F;
+//        GL11.glPushAttrib(GL11.GL_TRANSFORM_BIT);
 //
-//        Map<Character, Color> map = new HashMap<>();
-//        map.put('0', new Color(zero, zero, zero, alpha));
-//        map.put('1', new Color(zero, zero, sixth, alpha));
-//        map.put('2', new Color(zero, sixth, zero, alpha));
-//        map.put('3', new Color(zero, sixth, sixth, alpha));
-//        map.put('4', new Color(sixth, zero, zero, alpha));
-//        map.put('5', new Color(sixth, zero, sixth, alpha));
-//        map.put('6', new Color(one, sixth, zero, alpha));
-//        map.put('7', new Color(sixth, sixth, sixth, alpha));
-//        map.put('8', new Color(third, third, third, alpha));
-//        map.put('9', new Color(third, third, one, alpha));
-//        map.put('a', new Color(third, one, third, alpha));
-//        map.put('b', new Color(third, one, one, alpha));
-//        map.put('c', new Color(one, third, third, alpha));
-//        map.put('d', new Color(one, third, one, alpha));
-//        map.put('e', new Color(one, one, third, alpha));
-//        map.put('f', new Color(one, one, one, alpha));
-//        return map;
+//        GL11.glMatrixMode(GL11.GL_PROJECTION);
+//        GL11.glPushMatrix();
+//        GL11.glMatrixMode(GL11.GL_MODELVIEW);
+//        GL11.glPushMatrix();
+//
+//        try
+//        {
+//            Method setupCameraTransform = EntityRenderer.class.getDeclaredMethod("setupCameraTransform", float.class, int.class);
+//            setupCameraTransform.setAccessible(true);
+//            setupCameraTransform.invoke(mc.entityRenderer, partialTicks, 0);
+//        }
+//        catch (Exception e)
+//        {
+//            e.printStackTrace();
+//        }
+//
+//        FloatBuffer modelMatrix = BufferUtils.createFloatBuffer(16);
+//        GL11.glGetFloat(GL11.GL_MODELVIEW_MATRIX, modelMatrix);
+//
+//        FloatBuffer projMatrix = BufferUtils.createFloatBuffer(16);
+//        GL11.glGetFloat(GL11.GL_PROJECTION_MATRIX, projMatrix);
+//
+//        IntBuffer viewport = BufferUtils.createIntBuffer(16);
+//        GL11.glGetInteger(GL11.GL_VIEWPORT, viewport);
+//
+//        GL11.glMatrixMode(GL11.GL_MODELVIEW);
+//        GL11.glPopMatrix();
+//        GL11.glMatrixMode(GL11.GL_PROJECTION);
+//        GL11.glPopMatrix();
+//
+//        GL11.glPopAttrib();
+//
+//        FloatBuffer screen2D = BufferUtils.createFloatBuffer(16);
+//        if (Project.gluProject((float) entity.posX, (float) entity.posY, (float) entity.posZ, modelMatrix, projMatrix, viewport, screen2D))
+//        {
+//            return new int[]{(int) screen2D.get(0), (int) screen2D.get(1)};
+//        }
+//        return null;
 //    }
 
     private static class Color

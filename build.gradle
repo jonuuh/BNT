@@ -12,9 +12,9 @@ buildscript {
 }
 apply plugin: 'net.minecraftforge.gradle.forge'
 
-version = "1.2.0"
+version = "1.2.1"
 group = "net.jonuuh.bnt"
-archivesBaseName = "BetterNametags-1.8.9"
+archivesBaseName = "BNT-1.8.9"
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
